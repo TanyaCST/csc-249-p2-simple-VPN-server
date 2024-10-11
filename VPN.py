@@ -13,42 +13,105 @@ args = parser.parse_args()
 VPN_IP = args.VPN_IP  # Address to listen on
 VPN_PORT = args.VPN_port  # Port to listen on (non-privileged ports are > 1023)
 
-vpn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-ADDR = (VPN_IP, VPN_PORT)
-vpn.bind(ADDR)
+def __init__(self, server_ip, server_port, message, server_reply):
+    self.SERVER_IP = server_ip
+    self.SERVER_PORT = server_port
+    self.msg = message
+    self.server_reply = server_reply
+    self.vpn_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.vpn_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    
 
-def parse_message(message):
-    message = message.decode("utf-8")
+def parse_message(msg_input):
+    msg = msg_input.decode("utf-8")
     # Parse the application-layer header into the destination SERVER_IP, destination SERVER_PORT,
     # and message to forward to that destination
-    raise NotImplementedError("Your job is to fill this function in. Remove this line when you're done.")
+    SERVER_IP, SERVER_PORT, message = msg.split("#")
     return SERVER_IP, SERVER_PORT, message
 
-def client_vpn_server():
+def connect_client(self):
+    print("---Set up ADDR")
+    ADDR = (VPN_IP, VPN_PORT)
+    print("---Bind ADDR")
+    self.vpn_client.bind(ADDR)
+    
+    print("---VPN starts to accept connection and address")
+    self.vpn_client.listen()
+    print(f"---Listening success on {ADDR}")
+        
+# A method to handle client
+def handle_client(self):
+    print("---Accepting connection from <<CLIENT>>")
+    conn,addr = self.vpn_client.accept()
+    print("---Connection created")
     print(f"<New Connection> {addr} connecting client")
-    vpn.listen()
-    conn, addr = vpn.accept()
+    connected = True
+    while connected:
+        print("---Receiving message from client")
+        client_msg = conn.recv(1024)
+        if not client_msg:
+            break
+        else:
+            print(f"VPN received message: {client_msg}")
 
-    print("Connection Succeed")
-    print("Parsing messages")
+            print(f"---Parsing messages: {client_msg}")
+            list_client_msg = parse_message(client_msg)
+            self.SERVER_IP, self.SERVER_PORT, self.message = list_client_msg
+            print(f"Server IP: {self.SERVER_IP}")
+            print(f"Server Port: {self.SERVER_PORT}")
+            print(f"Client Message: {self.message}")
 
-    client_msg = conn.recv(1024)
-    SERVER_IP, SERVER_PORT, message = parse_message(client_msg)
-    # server_msg_decoded = server_msg.decode()
+# A method to send back server's reply to client
+def reply_client(self):
+    # After receiving server's reply, send the information back to client
+    print("---Sending server's reply to client")
+    self.vpn_client.sendall(self.server_reply)
+    print("---Successfully send server's reply")   
+
+# A method to set up connection with server
+def connect_server(self):
+    print("---Set up ADDR")
+    ADDR = (self.SERVER_IP, self.SERVER_PORT)
+    print("---Bind ADDR")
+    self.vpn_server.bind(ADDR)
     
-    print("VPN received message")
-    print("Sending the information to server")
-    # Send information to vpn
-    print(f"<New Connection> {SERVER_IP, SERVER_PORT} connecting server")
-    vpn.connect(SERVER_IP, SERVER_PORT)
-    print("Connection Succeed")
-    server_msg = message.decode()
-    print(f"Connection established, sending message '{message}'")
-    vpn.sendall(server_msg)
-    print("Message sent, waiting for reply")
+def handle_server(self):
+    print("---Accepting connection from <<SERVER>>")
+    conn,addr = self.vpn_server.accept()
+    print("---Connection accepted")
+    connected = True
+    while connected:
+        print(f"---Connected to server")
+        print(f"<New Connection> {self.SERVER_IP, self.SERVER_PORT} connecting server")
+        print("---Sending the information to server")
 
-    server_reply = conn.recv(1024)
-    
+        print(f"---Connection established, sending message '{self.message}'")
+        print(f"---Decoding message {self.message}")
+        self.vpn_server.sendall(self.message.decode())
+        print("Message sent, waiting for reply from server")
+
+        self.server_reply = conn.recv(1024)
+        print(f"---Receving message: {self.server_reply}")
+        if not self.server_reply:
+            print("!!Disconnect with server")
+            conn.close()
+            break
+
+def start():
+    print("---VPN starts to listen")
+    connect_client()
+    connect_server()
+    connected = True
+    while connected:
+        handle_client()
+        handle_server()
+
+
+print("---Setting up for VPN")
+start()
+print("<<VPN is DONE!>>")
+
+
 
 
 

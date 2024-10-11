@@ -11,7 +11,7 @@ server.bind(ADDR)
 def choice(conn, addr):
     print(f"<New Connection> {addr} connecting")
 
-    print("Starting number-letter conversion game :)))")
+    print("Starting number-letter conversion game :)")
 
     choice_input = conn.recv(1024)
     choice_input = choice_input.decode('utf-8')
