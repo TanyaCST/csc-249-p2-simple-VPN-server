@@ -1,4 +1,14 @@
 # Overview of Application
+This Client, VPN, Server application include transferring inforamation in 2 directions:
+1. Client -> VPN -> Server
+2. Server -> VPN -> Client
+
+This application includes a VPN server (VPN.py), 2 pairs of client and server applications (client and echo server, conversion client and server).
+
+The client firstly connect to VPN, send their message and the IP address and port to VPN. VPN receives client message, server IP, and server port. Then, VPN connects to the server and send the client message to the server. Server process the message and generates a reply. The server send the reply back to the VPN. Then, after receiving the reply from server, VPN send the server response back to client. 
+If there is no proper messages or data send between client, server, and VPN, the connections close.
+
+Here is a simple explanation of conversion client and server application:
 The conversion client and server application provides two conversion games:
 1. Converting from string variables to integers
 2. Converting from string variables to bytes
@@ -6,41 +16,63 @@ The user, or client, will receive instruction of two choices for this conversion
 
 When user enter the game, both games will let user enter a string. There is no limitation of what they can put in. Then, the server will compute and send the result back to the client. After sending the result back, the server stops. The client receives, prints out the result, and stops the client.
 
-# Client->VPN Message Format
+# VPN Message Format
 HOST: This is the loopback address.
 PORT: The port used by the server.
 ADDR: This is the address combining HOST and PORT.
 client: The socket store the address and maintains connection between client and server.
 
-deal_w_server(): The primary method responsible for starting the client side, guiding clients' action, and integrating other methods to keep every step in track.
-
-s_to_n(client_choice): Used after selecting track 'One'. Receiving calls from the server and gain responses from the server. Also outputs the result.
-
-s_to_b(client_choice): Used after selecting track 'Two'. Receiving calls from the server and gain responses from the server. Also outputs the result.
-
-# VPN->Server Message Format
-
-# Server->VPN Message Format
-HOST: This is the loopback address
-PORT: The port used by the server
-ADDR: The combination of HOST and PORT
-server: The socket store the address and maintains connection between client and server.
-
-choice(conn, addr): The choice function enables the connection between client and server, detects client's choice in action and starts corresponding methods.
-
-str_to_num(conn): The method to perform the conversion between string input to an integer by receiving inputs (bytes) from the client, decode bytes into string, convert letters from string into a list of characters, convert characters into integers and sum them up.
-
-str_to_bytes(conn): The method to perform the conversion between string input to bytes by receiving inputs from the client and outputs it.
-
-start(): A integrating method to start the server.
-
-# VPN->Client Message Format
 
 # Example Output
-## Testing with echo client and server application
+## Commandline tracing with echo client and server application
+*Server*
+server starting - listening for connections at IP 127.0.0.1 and port 65432
+Connected established with ('127.0.0.1', 52541)
+Received client message: 'b'Hello, world'' [12 bytes]
+echoing 'b'Hello, world'' back to client
+server is done!
 
+*VPN*
+---Setting up for VPN
+---VPN starts to listen
+---Set up ADDR
+---Bind ADDR
+---VPN starts to accept connection and address
+---Listening success on ('127.0.0.1', 55554)
+---Accepting connection from <<CLIENT>>
+---Connection created
+<New Connection> ('127.0.0.1', 54659) connecting client
+---Receiving message from client
+VPN received message: b'127.0.0.1#65432#Hello, world'
+---Parsing messages: b'127.0.0.1#65432#Hello, world'
+Server IP: 127.0.0.1
+Server Port: 65432
+Client Message: Hello, world
+---Set up ADDR
+---Connect to ADDR
+---Estabilishing connection to <<SERVER>>
+---Connected to server
+<New Connection> ('127.0.0.1', '65432') connecting server
+---Sending the information to server
+---Connection established, sending message 'Hello, world'
+---Decoding message Hello, world
+Message sent, waiting for reply from server
+---Receving message: b'Hello, world'
+---Sending server's reply to client
+---Successfully send server's reply
+<<VPN is DONE!>>
+---Close the connection to server
+---Close the connection to client
+<<EXIT>>
 
-## Testing with conversion client and server application
+*Client*
+client starting - connecting to VPN at IP 127.0.0.1 and port 55554
+connection established, sending message '127.0.0.1#65432#Hello, world'
+message sent, waiting for reply
+Received response: 'Hello, world' [12 bytes]
+client is done!
+
+## Commanline Tracing with conversion client and server application
 *Server 1*
 server <starting>
 <New Connection> ('127.0.0.1', 56307) connecting
@@ -115,7 +147,7 @@ choice sent,quitting...
 test client is done, exiting...
 
 # Acknowledgments
-In this assignment, I massively searched for python syntax, methods, etc. The link listed below are the websites I went throught, but are unnecessarily implemented in my code.
+In this assignment, I massively searched for python syntax, exceptions, and errors mainly related to stopping the connections. The link listed below are the websites I went throught. I was inspired by some of the websites, but not all of the contents from the links listed below are implemented in this application.
 https://www.youtube.com/watch?v=3QiPPX-KeSc
 https://stackoverflow.com/questions/23267305/python-sockets-peer-to-peer
 https://stackoverflow.com/questions/14388706/how-do-so-reuseaddr-and-so-reuseport-differ
@@ -131,4 +163,9 @@ https://www.geeksforgeeks.org/__init__-in-python/
 https://stackoverflow.com/questions/11576934/creating-peer-to-peer-connections-using-intermediate-server
 https://www.w3schools.com/python/gloss_python_raise.asp
 https://www.w3schools.com/python/python_classes.asp
-
+https://www.geeksforgeeks.org/with-statement-in-python/
+https://www.geeksforgeeks.org/self-in-python-class/
+https://stackoverflow.com/questions/55032621/oserror-errno-57-socket-is-not-connected
+https://stackoverflow.com/questions/11866792/how-to-prevent-errno-32-broken-pipe
+https://stackoverflow.com/questions/7360520/connectiontimeout-versus-sockettimeout
+https://stackoverflow.com/questions/2719017/how-to-set-timeout-on-pythons-socket-recv-method

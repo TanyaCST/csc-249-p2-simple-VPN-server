@@ -3,6 +3,7 @@
 import socket
 import arguments
 import argparse
+import select
 
 # Run 'python3 VPN.py --help' to see what these lines do
 parser = argparse.ArgumentParser('Send a message to a server at the given address and prints the response')
@@ -13,14 +14,6 @@ args = parser.parse_args()
 VPN_IP = args.VPN_IP  # Address to listen on
 VPN_PORT = args.VPN_port  # Port to listen on (non-privileged ports are > 1023)
 
-def __init__(self, server_ip, server_port, message, server_reply):
-    self.SERVER_IP = server_ip
-    self.SERVER_PORT = server_port
-    self.msg = message
-    self.server_reply = server_reply
-    self.vpn_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.vpn_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    
 
 def parse_message(msg_input):
     msg = msg_input.decode("utf-8")
@@ -28,90 +21,114 @@ def parse_message(msg_input):
     # and message to forward to that destination
     SERVER_IP, SERVER_PORT, message = msg.split("#")
     return SERVER_IP, SERVER_PORT, message
-
-def connect_client(self):
-    print("---Set up ADDR")
-    ADDR = (VPN_IP, VPN_PORT)
-    print("---Bind ADDR")
-    self.vpn_client.bind(ADDR)
-    
-    print("---VPN starts to accept connection and address")
-    self.vpn_client.listen()
-    print(f"---Listening success on {ADDR}")
         
 # A method to handle client
-def handle_client(self):
-    print("---Accepting connection from <<CLIENT>>")
-    conn,addr = self.vpn_client.accept()
+def handle_client(conn, addr):
     print("---Connection created")
     print(f"<New Connection> {addr} connecting client")
-    connected = True
-    while connected:
-        print("---Receiving message from client")
-        client_msg = conn.recv(1024)
-        if not client_msg:
-            break
-        else:
-            print(f"VPN received message: {client_msg}")
+    
+    print("---Receiving message from client")
+    client_msg = conn.recv(1024)
+    print(f"VPN received message: {client_msg}")
 
-            print(f"---Parsing messages: {client_msg}")
-            list_client_msg = parse_message(client_msg)
-            self.SERVER_IP, self.SERVER_PORT, self.message = list_client_msg
-            print(f"Server IP: {self.SERVER_IP}")
-            print(f"Server Port: {self.SERVER_PORT}")
-            print(f"Client Message: {self.message}")
+    print(f"---Parsing messages: {client_msg}")
+    SERVER_IP, SERVER_PORT, message = parse_message(client_msg)
+    print(f"Server IP: {SERVER_IP}")
+    print(f"Server Port: {SERVER_PORT}")
+    print(f"Client Message: {message}")
+    
+    return SERVER_IP, SERVER_PORT, message
+        
 
 # A method to send back server's reply to client
-def reply_client(self):
+def reply_client(conn, server_reply):
     # After receiving server's reply, send the information back to client
     print("---Sending server's reply to client")
-    self.vpn_client.sendall(self.server_reply)
+    conn.sendall(server_reply)
     print("---Successfully send server's reply")   
-
-# A method to set up connection with server
-def connect_server(self):
-    print("---Set up ADDR")
-    ADDR = (self.SERVER_IP, self.SERVER_PORT)
-    print("---Bind ADDR")
-    self.vpn_server.bind(ADDR)
     
-def handle_server(self):
-    print("---Accepting connection from <<SERVER>>")
-    conn,addr = self.vpn_server.accept()
-    print("---Connection accepted")
+def handle_server(vpn_server,SERVER_IP,SERVER_PORT,message):
+    print("---Estabilishing connection to <<SERVER>>")
     connected = True
     while connected:
         print(f"---Connected to server")
-        print(f"<New Connection> {self.SERVER_IP, self.SERVER_PORT} connecting server")
+        print(f"<New Connection> {SERVER_IP, SERVER_PORT} connecting server")
         print("---Sending the information to server")
 
-        print(f"---Connection established, sending message '{self.message}'")
-        print(f"---Decoding message {self.message}")
-        self.vpn_server.sendall(self.message.decode())
+        print(f"---Connection established, sending message '{message}'")
+        print(f"---Decoding message {message}")
+        vpn_server.sendall(message.encode())
         print("Message sent, waiting for reply from server")
 
-        self.server_reply = conn.recv(1024)
-        print(f"---Receving message: {self.server_reply}")
-        if not self.server_reply:
+        server_reply = vpn_server.recv(1024)
+        print(f"---Receving message: {server_reply}")
+        if not server_reply:
             print("!!Disconnect with server")
-            conn.close()
+            vpn_server.close()
             break
+        else:
+            return server_reply
 
 def start():
     print("---VPN starts to listen")
-    connect_client()
-    connect_server()
+    # connect_client()
+    vpn_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print("---Set up ADDR")
+    CLIENT_ADDR = (VPN_IP, VPN_PORT)
+    print("---Bind ADDR")
+    vpn_client.bind(CLIENT_ADDR)
+    
+    print("---VPN starts to accept connection and address")
+    vpn_client.listen()
+    print(f"---Listening success on {CLIENT_ADDR}")
+    print("---Accepting connection from <<CLIENT>>")
+    conn,addr = vpn_client.accept()
+
+    check = 0
+
     connected = True
     while connected:
-        handle_client()
-        handle_server()
+        if check >= 1:
+            conn.setblocking(0)
+            ready = select.select([conn], [], [], 5)
+            if ready[0]:
+                data = conn.recv(1024)
+                if(data == b''):
+                    break
+            else:
+                break
+
+
+
+        SERVER_IP, SERVER_PORT, message = handle_client(conn,addr)
+
+        if(SERVER_IP == "Error") and (SERVER_PORT == "Error") and (message == "Error"):
+            connected == False
+        else:
+            vpn_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            print("---Set up ADDR")
+            ADDR = (SERVER_IP, int(SERVER_PORT))
+            print("---Connect to ADDR")
+            vpn_server.connect(ADDR)
+
+            server_reply = handle_server(vpn_server, SERVER_IP, SERVER_PORT, message)
+            reply_client(conn, server_reply)
+        check += 1
+
+            
+            
+            
+
+    print("<<VPN is DONE!>>")
+    print("---Close the connection to server")
+    vpn_server.close()
+    print("---Close the connection to client")
+    conn.close()
+    print("<<EXIT>>")
 
 
 print("---Setting up for VPN")
 start()
-print("<<VPN is DONE!>>")
-
-
 
 
 

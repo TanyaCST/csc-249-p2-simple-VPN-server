@@ -1,8 +1,16 @@
 import socket
+import arguments
+import argparse
 
-HOST = "127.0.0.1"  # This is the loopback address
-PORT = 65432        # The port used by the server
-ADDR = (HOST, PORT)
+# Run 'python3 echo-server.py --help' to see what these lines do
+parser = argparse.ArgumentParser('Starts a server that returns the data sent to it unmodified')
+parser.add_argument('--server_IP', help='IP address at which to host the server', **arguments.ip_addr_arg)
+parser.add_argument('--server_port', help='Port number at which to host the server', **arguments.server_port_arg)
+args = parser.parse_args()
+
+SERVER_IP = args.server_IP  # Address to listen on
+SERVER_PORT = args.server_port  # Port to listen on (non-privileged ports are > 1023)
+ADDR = (SERVER_IP, SERVER_PORT)
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
@@ -116,4 +124,4 @@ def start():
 print("server <starting>")
 start()    
 print("server is <done>")
-server.close()
+#server.close()
