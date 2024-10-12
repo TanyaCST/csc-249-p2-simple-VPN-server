@@ -12,8 +12,6 @@ SERVER_IP = args.server_IP  # Address to listen on
 SERVER_PORT = args.server_port  # Port to listen on (non-privileged ports are > 1023)
 ADDR = (SERVER_IP, SERVER_PORT)
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(ADDR)
 
 # Ask clients which 
 def choice(conn, addr):
@@ -49,35 +47,32 @@ def str_to_num(conn):
     instruction = "Please enter a word you want to play with:"
     conn.sendall(instruction.encode('utf-8'))
 
-    connection = True
-    while connection:
-        # Receiving user input
-        letter_byte = conn.recv(1024)
-        print(f"Starting to convert string to numbers")
+    # Receiving user input
+    letter_byte = conn.recv(1024)
+    print(f"The word received is: {letter_byte}")
+    print(f"Starting to convert string to numbers")
 
-        print("Convert letters from <byte> to <string>")
-        letter = letter_byte.decode('utf-8')
+    print("Convert letters from <byte> to <string>")
+    letter = letter_byte.decode('utf-8')
 
-        print("Convert letters from <string> into <a list of characters>")
-        letter_list = list(letter)
+    print("Convert letters from <string> into <a list of characters>")
+    letter_list = list(letter)
 
-
-        print("Convert <a list of characters> into <number>")
-        # Use loop to loop through the list of characters
-        # Convert each of them into number and add the numbers
-        sum = 0
-        index = 0
-        while index < len(letter_list):
-            sum += ord(letter_list[index])
-            index += 1
+    print("Convert <a list of characters> into <number>")
+    # Use loop to loop through the list of characters
+    # Convert each of them into number and add the numbers
+    sum = 0
+    index = 0
+    while index < len(letter_list):
+        sum += ord(letter_list[index])
+        index += 1
             
-        # Convert num into string
-        num = str(sum)
+    # Convert num into string
+    num = str(sum)
 
-        # Send the num_byte back to client
-        print("[SEND THE NUMBER BACK TO CLIENT...]")
-        conn.sendall(num.encode('utf-8'))
-        connection = False
+    # Send the num_byte back to client
+    print("[SEND THE NUMBER BACK TO CLIENT...]")
+    conn.sendall(num.encode('utf-8'))
 
         
 
@@ -88,36 +83,32 @@ def str_to_bytes(conn):
     instruction = "Please enter a word you want to play with:"
     conn.sendall(instruction.encode('utf-8'))
 
-    connection = True
-    while connection:
-        # Receiving user input
-        str_byte = conn.recv(1024)
-        print(f"Starting to convert strings to bytes")
+    # Receiving user input
+    str_byte = conn.recv(1024)
+    print(f"The word received is: {str_byte}")
+    print(f"Starting to convert strings to bytes")
 
-        # Convert byte letters into string letters
-        print("Convert number from <byte> to <string>")
-        str_new = str_byte.decode('utf-8')
+    # Convert byte letters into string letters
+    print("Convert number from <byte> to <string>")
+    str_new = str_byte.decode('utf-8')
 
-        # Convert string back to byte
-        print("Convert string to <byte>")
-        str_output = str_new.encode('utf-8')
+    # Convert string back to byte
+    print("Convert string to <byte>")
+    str_output = str_new.encode('utf-8')
 
-        # Encode the string and send the byte back to the client
-        print("[SEND THE LETTER BACK TO CLIENT...]")
-        conn.sendall(str_output)
-        
-        connection = False
+    # Encode the string and send the byte back to the client
+    print("[SEND THE LETTER BACK TO CLIENT...]")
+    conn.sendall(str_output)
 
 
 
 # Enable the socket and start connecting with clients
 def start():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(ADDR)
     server.listen()
-    start_status = True
-    while start_status:
-        conn, addr = server.accept()
-        choice(conn, addr)
-        start_status = False
+    conn, addr = server.accept()
+    choice(conn,addr)
 
 
 

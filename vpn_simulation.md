@@ -3,7 +3,7 @@ This Client, VPN, Server application include transferring inforamation in 2 dire
 1. Client -> VPN -> Server
 2. Server -> VPN -> Client
 
-This application includes a VPN server (VPN.py), 2 pairs of client and server applications (client and echo server, conversion client and server).
+This application includes a VPN server (VPN.py), 2 pairs of client and server applications (client and echo server, conversion client and server, basic math client and server).
 
 The client firstly connect to VPN, send their message and the IP address and port to VPN. VPN receives client message, server IP, and server port. Then, VPN connects to the server and send the client message to the server. Server process the message and generates a reply. The server send the reply back to the VPN. Then, after receiving the reply from server, VPN send the server response back to client. 
 If there is no proper messages or data send between client, server, and VPN, the connections close.
@@ -72,81 +72,66 @@ message sent, waiting for reply
 Received response: 'Hello, world' [12 bytes]
 client is done!
 
-## Commanline Tracing with conversion client and server application
-*Server 1*
-server <starting>
-<New Connection> ('127.0.0.1', 56307) connecting
-Starting number-letter conversion game :)))
-Client choose to convert string to numbers
-Starting to convert string to numbers
-Convert letters from <byte> to <string>
-Convert letters from <string> into <a list of characters>
-Convert <a list of characters> into <number>
-[SEND THE NUMBER BACK TO CLIENT...]
-server is <done>
+## Commandline Tracing with basic math client and server application
+*Server*
+basic math server starting - listening for connections at IP 127.0.0.1 and port 65432
+Connected established with ('127.0.0.1', 55808)
+Received client message: 'b'+1:3:5'' [6 bytes]
+requested operation is addition
+request includes 3 arguments: 1 3 5
+result of operation: 9
+sending result message 1+3+5=9
+server is done!
 
-*Client 1*
-Connection start.... Try to connect with server...
-Successfully connect to the server
-Starting number-letter conversion game :)))
-There are two games.
-1. Convert your input into number.
-2. Convert your input to bytes.
-Please enter One or Two:One
-choice sent, waiting for reply
-Reply received
-Please enter a word you want to play with:west
-Letter sent to the server, waiting for the final response...
-Response Received, the result is 451
-test client is done, exiting...
+*VPN*
+---Setting up for VPN
+---VPN starts to listen
+---Set up ADDR
+---Bind ADDR
+---VPN starts to accept connection and address
+---Listening success on ('127.0.0.1', 55554)
+---Accepting connection from <<CLIENT>>
+---Connection created
+<New Connection> ('127.0.0.1', 55807) connecting client
+---Receiving message from client
+VPN received message: b'127.0.0.1#65432#+1:3:5'
+---Parsing messages: b'127.0.0.1#65432#+1:3:5'
+Server IP: 127.0.0.1
+Server Port: 65432
+Client Message: +1:3:5
+---Set up ADDR
+---Connect to ADDR
+---Estabilishing connection to <<SERVER>>
+---Connected to server
+<New Connection> ('127.0.0.1', '65432') connecting server
+---Sending the information to server
+---Connection established, sending message '+1:3:5'
+---Decoding message +1:3:5
+Message sent, waiting for reply from server
+---Receving message: b'1+3+5=9'
+---Sending server's reply to client
+---Successfully send server's reply
+<<VPN is DONE!>>
+---Close the connection to server
+---Close the connection to client
+<<EXIT>>
 
-*Server 2*
-server <starting>
-<New Connection> ('127.0.0.1', 56324) connecting
-Starting number-letter conversion game :)))
-Client choose to convert from string to bytes
-Starting to convert strings to bytes
-Convert number from <byte> to <string>
-Convert string to <byte>
-[SEND THE LETTER BACK TO CLIENT...]
-server is <done>
+*Client*
+client starting - connecting to VPN at IP 127.0.0.1 and port 55554
+would you like to connect to basic math or other? (1 for basic math, 2 for other, 3 to exit) [disclaimer: you can only connect to the server you run, otherwise there will be errors]    1
+What (addition/subtraction) equation would you like solved? (Please enter your equation in the following format: +1:3:5 or -1:3:5. The order of the numbers matter.)   +1:3:5
+connection established, sending message '127.0.0.1#65432#+1:3:5'
+message sent, waiting for reply
+Received response: '1+3+5=9' [7 bytes]
+client is done!
 
-*Client 2*
-Connection start.... Try to connect with server...
-Successfully connect to the server
-Starting number-letter conversion game :)))
-There are two games.
-1. Convert your input into number.
-2. Convert your input to bytes.
-Please enter One or Two:Two
-choice sent, waiting for reply
-Reply received
-Please enter a word you want to play with:west
-Num sent to the server, waiting for the final response...
-Response Received, the result is b'west'
-test client is done, exiting...
+## Commandline Tracing with conversion client and server application
+There is no proper commandline tracing for conversion client and server due to error:
 
-*Server 3*
-server <starting>
-<New Connection> ('127.0.0.1', 56342) connecting
-Starting number-letter conversion game :)))
-This client doesn't want to response.
-Connection Off
-server is <done>
-
-*Client 3*
-Connection start.... Try to connect with server...
-Successfully connect to the server
-Starting number-letter conversion game :)))
-There are two games.
-1. Convert your input into number.
-2. Convert your input to bytes.
-Please enter One or Two:thr
-choice sent, waiting for reply
-choice sent,quitting...
-test client is done, exiting...
 
 # Acknowledgments
+The basic math client and server are created by Emily Ren. I borrowed her model to test the VPN.py because there is an error : *[Errno 35] Resource temporarily unavailable* using conversion client and server. I really appreciate her patience and help in another contry with a 6-hours timezone difference. We did not discussed much, but she solved my biggest problem about the order of enabling files in the terminal.
+
 In this assignment, I massively searched for python syntax, exceptions, and errors mainly related to stopping the connections. The link listed below are the websites I went throught. I was inspired by some of the websites, but not all of the contents from the links listed below are implemented in this application.
 https://www.youtube.com/watch?v=3QiPPX-KeSc
 https://stackoverflow.com/questions/23267305/python-sockets-peer-to-peer

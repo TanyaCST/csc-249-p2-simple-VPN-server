@@ -16,7 +16,7 @@ SERVER_PORT = args.server_port  # The port used by the server
 VPN_IP = args.VPN_IP  # The server's IP address
 VPN_PORT = args.VPN_port  # The port used by the server
 MSG = ' '.join(args.message) # The message to send to the server
-ADDR = VPN_IP,VPN_PORT
+ADDR = (VPN_IP,VPN_PORT)
 
 def encode_message(message):
     # Add an application-layer header to the message that the VPN can use to forward it

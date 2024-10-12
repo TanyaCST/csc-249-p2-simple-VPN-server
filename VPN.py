@@ -90,7 +90,7 @@ def start():
     while connected:
         if check >= 1:
             conn.setblocking(0)
-            ready = select.select([conn], [], [], 5)
+            ready = select.select([conn], [], [], 15)
             if ready[0]:
                 data = conn.recv(1024)
                 if(data == b''):
