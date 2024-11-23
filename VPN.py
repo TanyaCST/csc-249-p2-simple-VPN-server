@@ -52,17 +52,19 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as vpn:
             SERVER_IP, SERVER_PORT, message = parse_message(msg)
             print("Message Parsed")
 
+            SERVER_ADDR = {SERVER_IP,int(SERVER_PORT)}
+
             print("Connect to server...")
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as vpn_s:
                 try:
-                    vpn_s.connect(SERVER_IP, SERVER_PORT)
+                    vpn_s.connect(SERVER_ADDR)
                     print("Connection Success --- forwarding message")
 
                     # Forward messages in specific form
                     vpn_s.sendall(bytes(message), "utf-8")
                     print("Message sent. Waiting for reply...")
 
-                    response = vpn_s.recv(1024)
+                    response = vpn_s.recv(1024).decode("utf-8")
                     if not response:
                         print("No response received from server...")
                         conn_c.sendall(bytes("Error!!!No Response From Server"))
@@ -77,7 +79,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as vpn:
                         break
                 except Exception as e:
                     print("!!! Connection to Server Fail")
-                    conn_c.sendall(bytes("Error!!! Fail to Connect the Server"))
+                    conn_c.sendall(b"Error!!! Fail to Connect the Server")
 
 
 
