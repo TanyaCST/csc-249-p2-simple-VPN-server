@@ -3,7 +3,6 @@
 import socket
 import arguments
 import argparse
-import select
 
 # Run 'python3 VPN.py --help' to see what these lines do
 parser = argparse.ArgumentParser('Send a message to a server at the given address and prints the response')
@@ -22,113 +21,64 @@ def parse_message(msg_input):
     SERVER_IP, SERVER_PORT, message = msg.split("#")
     return SERVER_IP, SERVER_PORT, message
         
-# A method to handle client
-def handle_client(conn, addr):
-    print("---Connection created")
-    print(f"<New Connection> {addr} connecting client")
-    
-    print("---Receiving message from client")
-    client_msg = conn.recv(1024)
-    print(f"VPN received message: {client_msg}")
+print("VPN starting: ||Preparing||")
 
-    print(f"---Parsing messages: {client_msg}")
-    SERVER_IP, SERVER_PORT, message = parse_message(client_msg)
-    print(f"Server IP: {SERVER_IP}")
-    print(f"Server Port: {SERVER_PORT}")
-    print(f"Client Message: {message}")
-    
-    return SERVER_IP, SERVER_PORT, message
-        
+# Connect to client
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as vpn:
+    # Opening VPN socket and start to listen
+    VPN_PORT = int(VPN_PORT)
+    vpn.bind((VPN_IP, VPN_PORT))
+    vpn.listen()
+    print("---VPN Listening for connection---")
 
-# A method to send back server's reply to client
-def reply_client(conn, server_reply):
-    # After receiving server's reply, send the information back to client
-    print("---Sending server's reply to client")
-    conn.sendall(server_reply)
-    print("---Successfully send server's reply")   
-    
-def handle_server(vpn_server,SERVER_IP,SERVER_PORT,message):
-    print("---Estabilishing connection to <<SERVER>>")
-    connected = True
-    while connected:
-        print(f"---Connected to server")
-        print(f"<New Connection> {SERVER_IP, SERVER_PORT} connecting server")
-        print("---Sending the information to server")
+    # Accepting client connection and client address
+    conn_c, addr_c = vpn.accept()
 
-        print(f"---Connection established, sending message '{message}'")
-        print(f"---Decoding message {message}")
-        vpn_server.sendall(message.encode())
-        print("Message sent, waiting for reply from server")
+    with conn_c:
+        print("Connection Succeed: {addr_c}")
 
-        server_reply = vpn_server.recv(1024)
-        print(f"---Receving message: {server_reply}")
-        if not server_reply:
-            print("!!Disconnect with server")
-            vpn_server.close()
-            break
-        else:
-            return server_reply
+        while True:
+            # Receiving message from client
+            msg = conn_c.recv(1024);
 
-def start():
-    print("---VPN starts to listen")
-    # connect_client()
-    vpn_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print("---Set up ADDR")
-    CLIENT_ADDR = (VPN_IP, VPN_PORT)
-    print("---Bind ADDR")
-    vpn_client.bind(CLIENT_ADDR)
-    
-    print("---VPN starts to accept connection and address")
-    vpn_client.listen()
-    print(f"---Listening success on {CLIENT_ADDR}")
-    print("---Accepting connection from <<CLIENT>>")
-    conn,addr = vpn_client.accept()
-
-    check = 0
-
-    connected = True
-    while connected:
-        if check >= 1:
-            conn.setblocking(0)
-            ready = select.select([conn], [], [], 15)
-            if ready[0]:
-                data = conn.recv(1024)
-                if(data == b''):
-                    break
-            else:
+            # If there is no message sent
+            if not msg:
+                conn_c.sendAll("Error!!! NO MESSAGE")
+                print("!!!Error!!! NO MESSAGE")
                 break
 
+            print("Message Received - Start to Parse Message")
+            # We will parse server information based on message received from client
+            SERVER_IP, SERVER_PORT, message = parse_message(msg)
+            print("Message Parsed")
 
+            print("Connect to server...")
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as vpn_s:
+                try:
+                    vpn_s.connect(SERVER_IP, SERVER_PORT)
+                    print("Connection Success --- forwarding message")
 
-        SERVER_IP, SERVER_PORT, message = handle_client(conn,addr)
+                    # Forward messages in specific form
+                    vpn_s.sendall(bytes(message), "utf-8")
+                    print("Message sent. Waiting for reply...")
 
-        if(SERVER_IP == "Error") and (SERVER_PORT == "Error") and (message == "Error"):
-            connected == False
-        else:
-            vpn_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            print("---Set up ADDR")
-            ADDR = (SERVER_IP, int(SERVER_PORT))
-            print("---Connect to ADDR")
-            vpn_server.connect(ADDR)
+                    response = vpn_s.recv(1024)
+                    if not response:
+                        print("No response received from server...")
+                        conn_c.sendall(bytes("Error!!!No Response From Server"))
+                        break
+                    else:
+                        print("Response is Valid")
+                        print("Sending Server Response Back to Client...")
+                        conn_c.sendall(response, "utf-8")
 
-            server_reply = handle_server(vpn_server, SERVER_IP, SERVER_PORT, message)
-            reply_client(conn, server_reply)
-        check += 1
+                    if not conn_c.recv(1024) and not vpn_s.recv(1024):
+                        print("VPN is DONE!")
+                        break
+                except Exception as e:
+                    print("!!! Connection to Server Fail")
+                    conn_c.sendall(bytes("Error!!! Fail to Connect the Server"))
 
-            
-            
-            
-
-    print("<<VPN is DONE!>>")
-    print("---Close the connection to server")
-    vpn_server.close()
-    print("---Close the connection to client")
-    conn.close()
-    print("<<EXIT>>")
-
-
-print("---Setting up for VPN")
-start()
 
 
 
